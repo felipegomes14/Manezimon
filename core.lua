@@ -2,8 +2,11 @@ exploration = require("exploration")
 battleModule = require("battle")
 inputModule = require("input")
 drawModule = require("draw")
+encyclopedia = require("encyclopedia")
 
 function initGame()
+
+	
 
 	wf = require "libraries/windfield"
 	world = wf.newWorld(0, 0)
@@ -22,7 +25,7 @@ function initGame()
 
 	gameState = "exploration"
 
-	-- PLAYER
+	
 	player = {}
 	player.x = mapWidth / 2
 	player.y = mapHeight - 100
@@ -43,22 +46,41 @@ function initGame()
 	}
 	player.anim = player.animations.down
 
-	-- SPRITES
+	
 	sprites = {}
 
 	sprites.background = love.graphics.newImage("sprites/battle/background.png")
 
+	sprites.battleMap = love.graphics.newImage("sprites/creatures/martim_pescador/catalogo.png")
+	sprites.battleMap = love.graphics.newImage("sprites/creatures/catanhao/catalogo.png")
+	sprites.battleMap = love.graphics.newImage("sprites/creatures/ra_manezinha/catalogo.png")
+	sprites.battleMap = love.graphics.newImage("sprites/creatures/maruim/catalogo.png")
+
 	sprites.playerSheet = love.graphics.newImage("sprites/creatures/martim_pescador/back.png")
 	sprites.playerGrid = anim8.newGrid(32,32,sprites.playerSheet:getWidth(),sprites.playerSheet:getHeight())
-	sprites.playerAnim = anim8.newAnimation(sprites.playerGrid('1-2',1),0.4)
+	sprites.playerAnim = anim8.newAnimation(sprites.playerGrid('1-4',1),0.6)
 
 	sprites.raSheet = love.graphics.newImage("sprites/creatures/ra_manezinha/front.png")
 	sprites.raGrid = anim8.newGrid(16,16,sprites.raSheet:getWidth(),sprites.raSheet:getHeight())
-	sprites.raAnim = anim8.newAnimation(sprites.raGrid('1-3',1),0.4)
+	sprites.raAnim = anim8.newAnimation(sprites.raGrid('1-3',1),0.6)
 
 	sprites.catSheet = love.graphics.newImage("sprites/creatures/catanhao/front.png")
 	sprites.catGrid = anim8.newGrid(32,32,sprites.catSheet:getWidth(),sprites.catSheet:getHeight())
-	sprites.catAnim = anim8.newAnimation(sprites.catGrid('1-2',1),0.4)
+	sprites.catAnim = anim8.newAnimation(sprites.catGrid('1-2',1),0.6)
+
+	sprites.martimSheet = love.graphics.newImage("sprites/creatures/martim_pescador/front.png")
+	sprites.martimGrid = anim8.newGrid(32,32,sprites.martimSheet:getWidth(),sprites.martimSheet:getHeight())
+	sprites.martimAnim = anim8.newAnimation(sprites.martimGrid('1-3',1),0.6)
+
+	sprites.maruimSheet = love.graphics.newImage("sprites/creatures/maruim/front.png")
+	sprites.maruimGrid = anim8.newGrid(32,32,sprites.maruimSheet:getWidth(),sprites.maruimSheet:getHeight())
+	sprites.maruimAnim = anim8.newAnimation(sprites.maruimGrid('1-4',1),0.3)
+
+	sprites.tainhaSheet = love.graphics.newImage("sprites/creatures/tainha/front.png")
+	sprites.tainhaGrid = anim8.newGrid(32,32,sprites.tainhaSheet:getWidth(),sprites.tainhaSheet:getHeight())
+	sprites.tainhaAnim = anim8.newAnimation(sprites.tainhaGrid('1-4',1),0.3)
+
+	encyclopedia.load()
 
 	hitEffect = {
 		player = {timer=0},
@@ -66,9 +88,10 @@ function initGame()
 	}
 
 	typeChart = {
-		fire = {grass=2, water=0.5},
-		water = {fire=2, grass=0.5},
-		grass = {water=2, fire=0.5}
+		fire = {grass=2, water=0.5, fire=0.5},
+		water = {fire=2, grass=0.5, water=0.5},
+		grass = {water=2, fire=0.5, grass=0.5},
+		normal = {water=1, fire=1, grass=1, normal=1}
 	}
 
 	currentEnemyIndex = 1
@@ -106,6 +129,7 @@ function initGame()
 		},
 
 		enemy={
+			id="ra_manezinha",
 			name="RÃ MANEZINHA",
 			type="grass",
 			xpReward=25,
@@ -116,12 +140,52 @@ function initGame()
 		},
 
 		enemy2={
+			id="catanhao",
 			name="CATANHÃO",
 			type="water",
 			xpReward=30,
 			moves={
 				{name="Água",power=18,type="water"},
 				{name="Bolha",power=30,type="water"}
+			}
+		},
+
+		enemy3={
+			id="martim_pescador",
+			name="MARTIM PESCADOR",
+			type="fire",
+			xpReward=25,
+			moves={
+				{name="Chama",power=20,type="fire"},
+				{name="Investida",power=15,type="normal"},
+				{name="Lança Chamas",power=30,type="fire"},
+				{name="Ataque Rápido",power=12,type="normal"}
+			}
+		},
+
+		enemy4={
+			id="maruim",
+			name="MARUIM",
+			type="normal",
+			xpReward=25,
+			moves={
+				{name="sugar",power=20,type="fire"},
+				{name="Investida",power=15,type="normal"},
+				{name="irritar",power=30,type="fire"},
+				{name="Ataque Rápido",power=12,type="normal"}
+			}
+		},
+
+		enemy5={
+			id="tainha",
+			name="TAINHA",
+			type="water",
+			xpReward=25,
+			moves={
+				{name="afogar",power=20,type="water"},
+				{name="Investida",power=15,type="normal"},
+				{name="jato-dagua",power=30,type="water"},
+				{name="Ataque Rápido",power=12,type="normal"}
 			}
 		}
 	}
@@ -151,6 +215,9 @@ function updateGame(dt)
 	sprites.playerAnim:update(dt)
 	sprites.raAnim:update(dt)
 	sprites.catAnim:update(dt)
+	sprites.martimAnim:update(dt)
+	sprites.maruimAnim:update(dt)
+	sprites.tainhaAnim:update(dt)
 end
 
 function drawGame()
@@ -161,22 +228,26 @@ function drawGame()
 		cam:attach()
 
 		if gameMap.layers["solo"] then gameMap:drawLayer(gameMap.layers["solo"]) end
-		if gameMap.layers["secundaria"] then gameMap:drawLayer(gameMap.layers["secundaria"]) end
 		if gameMap.layers["sobre"] then gameMap:drawLayer(gameMap.layers["sobre"]) end
+		player.anim:draw(player.spriteSheet,player.x,player.y,nil,2,nil,6,9)
+		if gameMap.layers["secundaria"] then gameMap:drawLayer(gameMap.layers["secundaria"]) end
 
-		player.anim:draw(player.spriteSheet,player.x,player.y,nil,1.75,nil,6,9)
 
 		cam:detach()
 	else
 		drawModule.drawBattle(battle, sprites, hitEffect)
 	end
 
+	if encyclopedia.open then
+    drawModule.drawEncyclopedia(encyclopedia)
+    end
+
 	love.graphics.setColor(1,1,1)
 end
 
 function handleKey(key)
 
-    -- iniciar batalha
+    
     if key == "space" and gameState == "exploration" then
         startBattle()
         return
@@ -184,7 +255,7 @@ function handleKey(key)
 
     local newState = inputModule.handle(key, gameState, battle)
 
-    -- 🔥 ESSA PARTE É CRUCIAL
+    
     if newState == "exploration" then
         gameState = "exploration"
         return

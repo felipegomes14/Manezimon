@@ -5,6 +5,37 @@ local justEnteredMenu = false
 
 function inputModule.handle(key, gameState, battle)
 
+	if encyclopedia.open then
+
+		if key == "escape" then
+    encyclopedia.open = false
+    return gameState
+	end
+
+    if key == "down" then
+        encyclopedia.selected =
+            math.min(
+                encyclopedia.selected + 1,
+                #encyclopedia.entries
+            )
+    end
+
+    	if key == "up" then
+       		 encyclopedia.selected =
+           		 math.max(
+                encyclopedia.selected - 1,
+                1
+       	)
+    	end
+
+    	return gameState
+	end
+
+	if key == "tab" then
+    	encyclopedia.open = not encyclopedia.open
+    	return gameState
+	end
+
 	if gameState ~= "battle" then return end
 
 	if battleModule.isWaiting() then return end
